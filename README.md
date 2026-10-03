@@ -27,6 +27,16 @@ Educational articles with code snippets, a per-article **RAG chatbot** (Pinecone
 - [API Endpoints](#api-endpoints)
 - [Deployment](#deployment)
 - [Contributing](#contributing)
+  - [1. Fork the Repository](#1-fork-the-repository)
+  - [2. Clone Your Fork](#2-clone-your-fork)
+  - [3. Add the Upstream Remote](#3-add-the-upstream-remote)
+  - [4. Set Up Your Local Environment](#4-set-up-your-local-environment)
+  - [5. Keep Your Fork in Sync](#5-keep-your-fork-in-sync)
+  - [6. Create a Feature Branch](#6-create-a-feature-branch)
+  - [7. Make Your Changes](#7-make-your-changes)
+  - [8. Run the Tests](#8-run-the-tests)
+  - [9. Push to Your Fork](#9-push-to-your-fork)
+  - [10. Open a Pull Request](#10-open-a-pull-request)
 - [License](#license)
 
 ---
@@ -369,11 +379,142 @@ See [Option A — Docker](#option-a--docker-recommended) above.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Please follow the steps below to get started.
+
+### 1. Fork the Repository
+
+Click the **Fork** button at the top-right of the [CSEHub repo page](https://github.com/captain-07/CSEHub) to create your own copy under your GitHub account.
+
+### 2. Clone Your Fork
+
+```bash
+git clone https://github.com/<your-username>/CSEHub.git
+cd CSEHub
+```
+
+### 3. Add the Upstream Remote
+
+This lets you pull future changes from the original repo:
+
+```bash
+git remote add upstream https://github.com/captain-07/CSEHub.git
+git remote -v
+# You should see:
+#   origin    https://github.com/<your-username>/CSEHub.git (fetch/push)
+#   upstream  https://github.com/captain-07/CSEHub.git    (fetch/push)
+```
+
+### 4. Set Up Your Local Environment
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy the env template and fill in your secrets (see Environment Variables above)
+cp backend/.env.example backend/.env
+# Set DEBUG=True for local development
+
+# Run migrations and seed sample data
+python backend/manage.py migrate
+python backend/manage.py seed
+
+# Start the dev server — verify everything works
+python backend/manage.py runserver
+```
+
+> **Using Docker instead?** See [Option A — Docker](#option-a--docker-recommended) above — the same setup, just inside a container.
+
+### 5. Keep Your Fork in Sync
+
+Before starting new work, always sync with upstream:
+
+```bash
+git checkout dev
+git fetch upstream
+git merge upstream/dev
+git push origin dev
+```
+
+### 6. Create a Feature Branch
+
+Always branch off `dev` (not `main`). Use the naming convention below:
+
+```bash
+git checkout dev
+git checkout -b <type>/<short-description>
+```
+
+| Prefix | Use for |
+|--------|---------|
+| `feature/` | New features (`feature/problem-submissions`) |
+| `fix/` | Bug fixes (`fix/article-search-crash`) |
+| `docs/` | Documentation only (`docs/update-api-endpoints`) |
+| `refactor/` | Code restructuring (`refactor/serializer-cleanup`) |
+| `test/` | Adding or updating tests (`test/article-viewset`) |
+| `chore/` | Build, CI, tooling changes (`chore/docker-healthcheck`) |
+
+### 7. Make Your Changes
+
+- Keep commits focused and atomic — one logical change per commit.
+- **Do not** modify `backend/.env` (it's gitignored). Edit `.env.example` if you add new variables.
+- Preserve existing comments and docstrings that are unrelated to your changes.
+
+#### Commit Message Format
+
+```
+<type>: <short summary in imperative mood>
+
+# Examples:
+feat: add submission endpoint for coding problems
+fix: handle empty search query on articles list
+docs: add API auth section to README
+test: add viewset tests for categories
+refactor: extract RAG prompt template to constant
+```
+
+### 8. Run the Tests
+
+Make sure all tests pass before pushing:
+
+```bash
+python backend/manage.py test
+```
+
+If you added new functionality, **write tests** for it. Tests use Django's built-in `TestCase` (not pytest).
+
+### 9. Push to Your Fork
+
+```bash
+git push origin <type>/<short-description>
+```
+
+### 10. Open a Pull Request
+
+1. Go to your fork on GitHub.
+2. Click **"Compare & pull request"**.
+3. Set the base branch to **`captain-07/CSEHub` → `dev`** (not `main`).
+4. Fill in the PR template:
+   - **What** does this PR do?
+   - **Why** is this change needed?
+   - **How** can a reviewer test it?
+   - Link any related issues (e.g., `Closes #42`).
+5. Request a review from a maintainer.
+
+> **Important:** PRs should target the `dev` branch. The `main` branch is for production releases only.
+
+### Ground Rules
+
+- Be respectful and constructive in code reviews and discussions.
+- Keep PRs small and focused — it's easier to review and merge.
+- If you're working on something big, open an issue first to discuss the approach.
+- Don't push directly to `main` or `dev` on the upstream repo.
 
 ---
 
