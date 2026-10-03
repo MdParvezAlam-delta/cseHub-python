@@ -98,20 +98,27 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASE_URL = env('DATABASE_URL', default='')
+# Priority: DATABASE_URL (cloud/managed Postgres) wins. The DB_* fallback is
+# only used when DATABASE_URL is missing, empty, or whitespace-only. Under Docker
+# the DB_* values are overridden by docker-compose.yml so DB_HOST points at the
+# `db` service (which only runs under the `localdb` profile).
+DATABASE_URL = (env('DATABASE_URL', default='') or '').strip()
+# `docker-compose`'s env_file does not strip quotes the way python-dotenv does,
+# so DATABASE_URL=" " would otherwise look non-empty inside the container.
+DATABASE_URL = DATABASE_URL.strip('\'"').strip()
 if DATABASE_URL:
     DATABASES = {
-        'default': env.db('DATABASE_URL'),
+        'default': env.db_url_config(DATABASE_URL),
     }
 else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env('DB_NAME'),
-            'USER': env('DB_USER'),
-            'PASSWORD': env('DB_PASSWORD'),
-            'HOST': env('DB_HOST'),
-            'PORT': env('DB_PORT'),
+            'NAME': env('DB_NAME', default='csehub_db'),
+            'USER': env('DB_USER', default='postgres'),
+            'PASSWORD': env('DB_PASSWORD', default='postgres'),
+            'HOST': env('DB_HOST', default='localhost'),
+            'PORT': env('DB_PORT', default='5432'),
         }
     }
 

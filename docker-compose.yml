@@ -1,0 +1,103 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  CSEHub — local stack
+#
+#  Database resolution (mirrors backend/core/settings.py):
+#    1. DATABASE_URL set in backend/.env  → cloud Postgres (Supabase/Neon/Render).
+#       The local `db` service is NOT started.
+#    2. DATABASE_URL blank/missing       → the local `db` Postgres service.
+#       Start it with:  docker compose --profile localdb up --build
+#
+#  Quick reference
+#    Cloud DB  : docker compose up --build
+#    Local DB  : docker compose --profile localdb up --build
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: csehub
+
+services:
+  # ───────────────────────────────────────────────────────────────────────────
+  #  PostgreSQL — local fallback only.
+  #
+  #  Behind the `localdb` profile so it stays down whenever DATABASE_URL is set
+  #  in backend/.env. That avoids booting a database nothing connects to, and
+  #  avoids gating the backend on it.
+  # ───────────────────────────────────────────────────────────────────────────
+  db:
+    profiles: ["localdb"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Same file the backend reads, so DB_NAME/DB_USER/DB_PASSWORD can never
+    # drift apart. docker/postgres-entrypoint.sh maps them onto POSTGRES_*.
+    env_file:
+      - ./backend/.env
+    entrypoint: ["/usr/local/bin/csehub-postgres-entrypoint.sh"]
+    ports:
+      # Host port is overridable so it can coexist with a local Postgres.
+      - "${DB_PUBLISHED_PORT:-5432}:5432"
+    volumes:
+      - ./docker/postgres-entrypoint.sh:/usr/local/bin/csehub-postgres-entrypoint.sh:ro
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # $$ escapes to the container shell, so these resolve at runtime.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # ───────────────────────────────────────────────────────────────────────────
+  #  Django Backend (Gunicorn)
+  # ───────────────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      # Only consulted when DATABASE_URL is absent from backend/.env, in which
+      # case `db` is the hostname of the compose service above.
+      DB_HOST: db
+      DB_PORT: "5432"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend,frontend"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost"
+      CSRF_TRUSTED_ORIGINS: "http://localhost:3000,http://localhost"
+      DEBUG: "True"
+      SECURE_SSL_REDIRECT: "False"
+      DJANGO_COLLECTSTATIC: "False"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/schema/', timeout=4)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+        # `db` is only present under the `localdb` profile. With the profile off
+        # this is skipped instead of erroring, and the entrypoint's own
+        # readiness probe becomes the guarantee.
+        required: false
+
+  # ───────────────────────────────────────────────────────────────────────────
+  #  Frontend (Nginx — static HTML/CSS/JS + reverse proxy)
+  # ───────────────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

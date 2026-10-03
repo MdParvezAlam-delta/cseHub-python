@@ -1,0 +1,55 @@
+# NOTE: Docker's ignore patterns are matched against the full path, and a
+# leading `*`/`**` segment is required to reach nested directories. A bare
+# `*.md` only matches at the context root. Always anchor recursive patterns
+# with `**/`.
+
+# ── Python ──
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.egg-info/
+**/*.egg
+.venv/
+venv/
+env/
+**/.tox/
+**/.nox/
+**/.pytest_cache/
+**/.mypy_cache/
+**/htmlcov/
+**/.coverage
+**/node_modules/
+
+# ── Git ──
+.git/
+.gitignore
+
+# ── IDE ──
+**/.vscode/
+**/.idea/
+
+# ── OS ──
+**/.DS_Store
+**/Thumbs.db
+
+# ── Docker (don't nest, and never bake the dev Dockerfile into the web root) ──
+docker-compose.yml
+docker-compose.override.yml
+**/Dockerfile
+**/.dockerignore
+
+# ── Docs / temp ──
+# NB: no blanket *.txt pattern — requirements.txt lives at the context root and
+# must stay in the build context.
+**/*.md
+**/codebase*.txt
+**/codebase*.md
+
+# ── Deployment config (Vercel-only, must not be served by Nginx) ──
+**/vercel.json
+
+# ── Backend env (injected at runtime via compose `env_file`) ──
+backend/.env
+
+# ── Staticfiles (rebuilt by the backend image's collectstatic step) ──
+backend/staticfiles/

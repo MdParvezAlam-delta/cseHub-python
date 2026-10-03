@@ -137,3 +137,6 @@ codebase.txt
 codebase_summary.txt
 codebase_analysis.txt
 codebase.md
+
+# Docker
+docker-compose.override.yml
