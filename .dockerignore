@@ -45,9 +45,6 @@ docker-compose.override.yml
 **/codebase*.txt
 **/codebase*.md
 
-# ── Deployment config (Vercel-only, must not be served by Nginx) ──
-**/vercel.json
-
 # ── Backend env (injected at runtime via compose `env_file`) ──
 backend/.env
 

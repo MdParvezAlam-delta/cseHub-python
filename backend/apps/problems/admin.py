@@ -5,8 +5,8 @@ from .models import Problem, TestCase, Submission
 
 @admin.register(Problem)
 class ProblemAdmin(admin.ModelAdmin):
-    list_display = ['title', 'difficulty', 'category', 'is_published']
-    list_filter = ['difficulty', 'category', 'is_published']
+    list_display = ['title', 'difficulty', 'subject', 'is_published']
+    list_filter = ['difficulty', 'subject', 'is_published']
     search_fields = ['title']
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ['is_published']

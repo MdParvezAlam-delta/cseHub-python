@@ -27,9 +27,6 @@ RUN SECRET_KEY=build-only-not-a-secret \
     DEBUG=False \
     SUPABASE_JWT_SECRET=build-only \
     SUPABASE_URL=https://build.invalid \
-    PINECONE_API_KEY=build-only \
-    PINECONE_INDEX_NAME=build-only \
-    GEMINI_API_KEY=build-only \
     python backend/manage.py collectstatic --noinput
 
 # Run as an unprivileged user

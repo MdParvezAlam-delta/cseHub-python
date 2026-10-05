@@ -61,18 +61,24 @@ class SupabaseJWTAuthentication(BaseAuthentication):
         email = (payload.get("email") or "").lower()
         if not email:
             raise AuthenticationFailed("Token has no email.")
+        metadata = payload.get("user_metadata") or {}
 
         # Link a pre-existing Django-only account (e.g. your admin superuser)
         # but only if Supabase says the email is verified.
         existing = User.objects.filter(
             email__iexact=email, supabase_uid__isnull=True).first()
-        if existing and payload.get("user_metadata", {}).get("email_verified"):
+        if existing and metadata.get("email_verified"):
             existing.supabase_uid = uid
             existing.save(update_fields=["supabase_uid"])
             return existing
 
-        user = User(supabase_uid=uid, email=email,
-                    username=f"{email.split('@')[0][:100]}_{uid[:8]}")
+        display_name = metadata.get("display_name") or metadata.get("full_name") or ""
+        user = User(
+            supabase_uid=uid,
+            email=email,
+            username=f"{email.split('@')[0][:100]}_{uid[:8]}",
+            display_name=display_name[:100],
+        )
         user.set_unusable_password()
         try:
             with transaction.atomic():
@@ -82,3 +88,36 @@ class SupabaseJWTAuthentication(BaseAuthentication):
             if not user:
                 raise AuthenticationFailed("Account conflict.")
         return user
+
+
+class LocalPasswordJWTAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        if not settings.LOCAL_AUTH_ENABLED:
+            return None
+
+        parts = request.headers.get("Authorization", "").split()
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            return None
+
+        token = parts[1]
+        try:
+            unverified = jwt.decode(
+                token,
+                options={"verify_signature": False, "verify_exp": False},
+            )
+            issuer = f"{settings.SUPABASE_URL}/local-auth"
+            if unverified.get("iss") != issuer:
+                return None
+
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=["HS256"],
+                audience="csehub-local",
+                issuer=issuer,
+            )
+            user = User.objects.get(pk=payload["sub"], is_active=True)
+        except (PyJWTError, User.DoesNotExist, KeyError, ValueError) as exc:
+            raise AuthenticationFailed("Invalid or expired token.") from exc
+        return (user, token)
+

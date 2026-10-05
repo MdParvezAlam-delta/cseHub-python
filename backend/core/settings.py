@@ -36,6 +36,7 @@ SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
+LOCAL_AUTH_ENABLED = env.bool('LOCAL_AUTH_ENABLED', default=DEBUG)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 RENDER_EXTERNAL_HOSTNAME = env('RENDER_EXTERNAL_HOSTNAME', default='')
@@ -55,10 +56,13 @@ INSTALLED_APPS = [
     # added apps
     'rest_framework',
     'corsheaders',
+    # Retained only to apply historical migrations that remove legacy content.
     'apps.articles',
+    'apps.chatbot',
+    'apps.subjects',
     'apps.users',
     'apps.problems',
-    'apps.chatbot',
+    'apps.workspace',
     'django_filters',
     'drf_spectacular',
 ]
@@ -181,6 +185,7 @@ if not DEBUG:
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.users.authentication.LocalPasswordJWTAuthentication',
         'apps.users.authentication.SupabaseJWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -189,7 +194,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS':
         'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-
     'DEFAULT_FILTER_BACKENDS': [
     'django_filters.rest_framework.DjangoFilterBackend',
     'rest_framework.filters.SearchFilter',
@@ -204,7 +208,3 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
-
-PINECONE_API_KEY = env('PINECONE_API_KEY')
-PINECONE_INDEX_NAME = env('PINECONE_INDEX_NAME')
-GEMINI_API_KEY = env('GEMINI_API_KEY')

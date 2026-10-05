@@ -12,7 +12,7 @@ cd /app/backend
 
 # `docker compose run backend <cmd...>` and `docker compose exec` pass arguments
 # through the entrypoint. Run them verbatim instead of booting the server, so
-# one-off management commands don't trigger migrate/seed as a side effect.
+# one-off management commands don't trigger migrations or app startup as a side effect.
 if [ "$#" -gt 0 ]; then
     exec "$@"
 fi
@@ -84,16 +84,6 @@ fi
 
 echo "==> Running migrations..."
 python manage.py migrate --noinput
-
-echo "==> Seeding database..."
-python manage.py seed || echo "    Seed skipped or already seeded."
-
-# Opt-in: re-indexing every published article into Pinecone is slow and costs
-# embedding credits, so it never runs implicitly on container start.
-if [ "${DJANGO_INGEST_ARTICLES:-False}" = "True" ]; then
-    echo "==> Ingesting articles into Pinecone..."
-    python manage.py ingest_articles || echo "    Ingestion failed; skipping."
-fi
 
 if [ -n "${DJANGO_SUPERUSER_EMAIL:-}" ] && [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
     echo "==> Creating superuser..."

@@ -9,8 +9,3 @@ whitenoise==6.9.0
 gunicorn==23.0.0
 psycopg[binary]==3.3.4
 PyJWT[crypto]==2.13.0
-pinecone==7.3.0
-langchain-core==1.6.0
-langchain-google-genai==4.3.5
-langchain-pinecone==0.2.13
-langchain-text-splitters==1.1.2

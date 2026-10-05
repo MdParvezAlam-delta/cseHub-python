@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from apps.articles.models import Category
+from apps.subjects.models import Subject
 
 # Create your models here.
 
@@ -19,8 +19,8 @@ class Problem(models.Model):
         choices=DIFFICULTY_CHOICES,
         default='easy'
     )
-    category = models.ForeignKey(
-        Category,
+    subject = models.ForeignKey(
+        Subject,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

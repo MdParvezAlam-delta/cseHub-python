@@ -5,11 +5,11 @@
 #    1. DATABASE_URL set in backend/.env  → cloud Postgres (Supabase/Neon/Render).
 #       The local `db` service is NOT started.
 #    2. DATABASE_URL blank/missing       → the local `db` Postgres service.
-#       Start it with:  docker compose --profile localdb up --build
+#       Start it with:  docker compose --profile localdb up --build backend
 #
 #  Quick reference
-#    Cloud DB  : docker compose up --build
-#    Local DB  : docker compose --profile localdb up --build
+#    Cloud DB  : docker compose up --build backend
+#    Local DB  : docker compose --profile localdb up --build backend
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: csehub
@@ -59,10 +59,11 @@ services:
       # case `db` is the hostname of the compose service above.
       DB_HOST: db
       DB_PORT: "5432"
-      ALLOWED_HOSTS: "localhost,127.0.0.1,backend,frontend"
-      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost"
-      CSRF_TRUSTED_ORIGINS: "http://localhost:3000,http://localhost"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:5173,http://localhost"
+      CSRF_TRUSTED_ORIGINS: "http://localhost:3000,http://localhost:5173,http://localhost"
       DEBUG: "True"
+      LOCAL_AUTH_ENABLED: "True"
       SECURE_SSL_REDIRECT: "False"
       DJANGO_COLLECTSTATIC: "False"
     ports:
@@ -84,20 +85,6 @@ services:
         # this is skipped instead of erroring, and the entrypoint's own
         # readiness probe becomes the guarantee.
         required: false
-
-  # ───────────────────────────────────────────────────────────────────────────
-  #  Frontend (Nginx — static HTML/CSS/JS + reverse proxy)
-  # ───────────────────────────────────────────────────────────────────────────
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    restart: unless-stopped
-    ports:
-      - "3000:80"
-    depends_on:
-      backend:
-        condition: service_healthy
 
 volumes:
   postgres_data:

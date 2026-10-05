@@ -2,7 +2,7 @@
 
 ## Repo overview
 
-Monorepo: `backend/` (Django 6.0.3 + DRF) and `frontend/` (Vercel placeholder — `.gitkeep` only).
+Backend repository: `backend/` (Django 6.0.3 + DRF). The React frontend is maintained separately.
 Deployed on Render with Gunicorn + WhiteNoise.
 
 ## First-read files
@@ -26,9 +26,6 @@ python backend/manage.py runserver
 python backend/manage.py makemigrations
 python backend/manage.py migrate
 
-# Seed sample data
-python backend/manage.py seed
-
 # Tests (Django TestCase, no pytest)
 python backend/manage.py test
 
@@ -39,7 +36,7 @@ python backend/manage.py collectstatic --noinput
 gunicorn core.wsgi:application --chdir backend --bind 0.0.0.0:${PORT:-8000}
 
 # Full build (build.sh)
-# Runs: pip install -> collectstatic -> migrate -> seed
+# Runs: pip install -> collectstatic -> migrate
 ```
 
 ## Architecture
@@ -53,9 +50,8 @@ gunicorn core.wsgi:application --chdir backend --bind 0.0.0.0:${PORT:-8000}
 
 | App | State | Key notes |
 |-----|-------|-----------|
-| `articles` | Mature | Full ViewSet CRUD. Admin write, public read. Category/Tag/Article + CodeSnippet models. |
+| `subjects` | CRUD | Staff-managed subject cards. Public list, staff-only writes. |
 | `problems` | Models only | Problem/TestCase/Submission models exist. Views/tests are stubs. |
-| `chatbot` | Models only | Conversation/Message models for RAG (Pinecone + Gemini). Views/tests are stubs. |
 | `users` | Auth + model | Custom User model, Supabase JWT auth class. Views/tests are stubs. |
 
 ## Quirks & gotchas
@@ -63,9 +59,7 @@ gunicorn core.wsgi:application --chdir backend --bind 0.0.0.0:${PORT:-8000}
 - `.env` lives in `backend/` (not root). Settings reads `BASE_DIR / '.env'`.
 - `DEBUG=False` in `.env` by default — set `True` for local dev.
 - `backend/.env` contains live credentials — never commit or expose.
-- `frontend/` is a Vercel placeholder — do not assume it has code.
-- All test files are empty stubs — tests live outside `tests/` directory per Django default.
-- Seed command (`python manage.py seed`) is idempotent (`get_or_create`).
+- Tests live in app-level `tests.py` files; run `python backend/manage.py test`.
 - No pre-commit hooks, no linting/formatting config detected.
 - No `pyproject.toml`, `setup.py`, `setup.cfg`, or `pytest.ini`.
 
